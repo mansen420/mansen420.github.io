@@ -4,6 +4,8 @@ layout: home
 permalink: /
 ---
 
-# Mansen's Dev Blog
+# Mansen's Codex
+
+[Your Key to The Arhive]()
 
 Under construction!

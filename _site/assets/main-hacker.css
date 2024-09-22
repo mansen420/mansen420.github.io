@@ -41,7 +41,7 @@ body {
   background-color: var(--background-color);
   margin: 0 auto;
   padding: 0;
-  font-family: "Source Code Pro", monospace;
+  font-family: "Fira Code", monospace;
   font-size: 18px;
   color: var(--text-color);
   text-align: left;
@@ -49,7 +49,6 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-size: 18px;
   margin: 0px;
   margin-top: 22px;
   font-weight: bold;
@@ -196,7 +195,7 @@ input[type=text], select, textarea {
   color: var(--text-color);
   caret-color: var(--text-color);
   font-size: 18px;
-  font-family: "Source Code Pro", monospace;
+  font-family: "Fira Code", monospace;
   line-height: 1.5;
 }
 
@@ -219,7 +218,7 @@ input, select, textarea, textarea::-webkit-input-placeholder {
 
 input[type=submit] {
   font-size: 18px;
-  font-family: "Source Code Pro", monospace;
+  font-family: "Fira Code", monospace;
   line-height: 1.5;
   cursor: pointer;
   color: var(--link-color);
@@ -260,7 +259,7 @@ pre {
   font-size: 18px;
   color: var(--text-color);
   line-height: 1.7 !important;
-  font-family: "Source Code Pro", monospace !important;
+  font-family: "Fira Code", monospace !important;
 }
 
 .highlight .hll {

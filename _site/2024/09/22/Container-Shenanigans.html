@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-XSS-Protection" content="1;mode=block" always>
+<meta http-equiv="Referrer-Policy" content="no-referrer, strict-origin-when-cross-origin">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Container Shenanigans</title>
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<meta name="generator" content="Jekyll v4.3.3">
+<meta property="og:title" content="Container Shenanigans">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="List and its Derivatives">
+<meta property="og:description" content="List and its Derivatives">
+<link rel="canonical" href="http://localhost:4000/2024/09/22/Container-Shenanigans.html">
+<meta property="og:url" content="http://localhost:4000/2024/09/22/Container-Shenanigans.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-09-22T00:00:00+03:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="Container Shenanigans">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2024-09-22T00:00:00+03:00","datePublished":"2024-09-22T00:00:00+03:00","description":"List and its Derivatives","headline":"Container Shenanigans","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2024/09/22/Container-Shenanigans.html"},"url":"http://localhost:4000/2024/09/22/Container-Shenanigans.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$']]
+      }
+    };
+  </script><link rel="stylesheet" type="text/css" href="/assets/main-light.css">
+</head>
+<body>
+    <div class="container">
+<header>
+  <div class="menu">
+    <ul></ul>
+  </div>
+</header>
+<main>
+      <h1 id="list-and-its-derivatives">List and its Derivatives</h1>
+
+<h2 id="the-wheel-of-time">The Wheel of Time</h2>
+
+<p>‘One day I woke up and decided that I needed a container class. I used std::vector. The end.’</p>
+
+<p>Is what a sane programmer would say.
+But what would I say?</p>
+
+<h3 id="context">Context</h3>
+
+<p>I am working on a linear algebra library. I need flexible yet efficient data structure to handle typical graphics tasks.
+I want a container that will hold small values like 4 byte colors, or 4 float vectors.
+‘Simple task!’ I say, and start typing away an abstraction over static arrays</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">dim</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">list</span>
+<span class="p">{</span>
+    <span class="n">T</span> <span class="n">data</span><span class="p">[</span><span class="n">dim</span><span class="p">];</span>
+    <span class="p">...</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>Everything is going well, vectors and matrices contain lists for data storage, and list allows fancy processing with a functional interface.</p>
+
+<h3 id="segfault">SEGFAULT</h3>
+
+<p>…What? How come? I am literally using static arrays!
+One word : Stack Overflow
+Turns out, I didn’t just need the list for vectors and matrices, I also needed it to store screen pixel data;
+1920x1080 pixels * 4 bytes = too much for the stack!</p>
+
+<p>‘Simple task! I will use std::vector since it allocates its data on the heap!’</p>
+
+<p>Is what a sane programmer would say.
+Me? I have a nagging sensation. Why would I need to store the 4 bytes of a vector on the heap? Who knows how much overhead std::vector will cost anyway?
+I give in, and decide that allocating on the heap is worth the trouble, only <em>I</em> will do it, <em>myelf</em>.
+And so I start typing the first layer of hell</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">dim</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">list</span>
+<span class="p">{</span>
+    <span class="n">T</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">dim</span><span class="p">];</span>
+    <span class="p">...</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>Now screen data and arrays and matrices can all use the same storage scheme!
+Finally, I have created the perfect container.</p>
+
+<h3 id="the-system-wants-to-speak-to-you">The System Wants to Speak to You</h3>
+
+<p>‘Hello? Yes, speaking’
+‘I can’t hear you well-‘
+‘Excuse me? What do you mean?’
+‘…Now?’</p>
+
+<p>It’s bad news. The system thinks it can change window sizes at runtime, after the program begins execution.
+List <em>must</em> know its size at compile-time, before the execution.</p>
+
+<p>‘Well, clearly we have a problem here.’
+‘No shit, sherlock’
+‘I’m just trying to help…’
+‘…’</p>
+
+<p>I look through the archives, surely someone must’ve had this problem before me?
+Technically, this is a solved problem. You just slap a size_t in there to keep track of the runtime size. But why should I do that when I can keep everything at compile time?</p>
+
+<p>Yes, this is it. I found the solution.</p>
+
+<p>Yet another layer.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="k">constexpr</span> <span class="n">uint</span> <span class="n">DYNAMIC</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">struct</span> <span class="nc">empty</span><span class="p">{};</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">DYNAMIC</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">list</span>
+<span class="p">{</span>
+    <span class="n">T</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">dim</span><span class="p">];</span>
+    <span class="p">[[</span><span class="n">no_unique_address</span><span class="p">]]</span> <span class="n">std</span><span class="o">::</span><span class="n">conditional_t</span><span class="o">&lt;</span> <span class="n">cond</span><span class="o">:</span> <span class="n">dim</span> <span class="o">==</span> <span class="n">DYNAMIC</span><span class="p">,</span> 
+    <span class="nl">iftrue:</span> <span class="kt">size_t</span><span class="p">,</span> <span class="n">iffalse</span><span class="o">:</span> <span class="n">empty</span><span class="o">&gt;</span> <span class="n">dynamicSize</span><span class="p">;</span>
+<span class="nl">public:</span>
+    <span class="p">...</span>
+    <span class="n">list</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">dynamicSize</span><span class="p">)</span> <span class="k">requires</span><span class="p">(</span><span class="n">dim</span> <span class="o">==</span> <span class="n">DYNAMIC</span><span class="p">)</span>
+    <span class="p">{...}</span>
+    <span class="p">...</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>‘What is this?’ You might say.
+No unique address? Is that a double array?
+No. This is a compiler attribute.
+See, the C++ spec states that each field in a class must be uniquely addressable.
+I am saying if the dimension is not dynamic, then make my dynamicSize an empty object, then please try to optimize the memory layout of my class by <em>maybe</em> overlapping this empty member with something else.
+At least now, worst case scenario is I have an extra byte on my class.</p>
+
+<p>Okay, is that all I had to do? Phew..</p>
+
+<p>‘So I just want to store 4 bytes per pixel. RGBA. That’s all I want to do. For every pixel on the screen. How would I do it?’
+Simple, really.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="k">typedef</span> <span class="kt">uint8_t</span> <span class="n">byte</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="n">list</span><span class="o">&lt;</span><span class="n">byte</span><span class="p">,</span> <span class="mi">4</span><span class="o">&gt;</span> <span class="n">RGBA</span><span class="p">;</span>
+<span class="n">list</span><span class="o">&lt;</span><span class="n">RGBA</span><span class="p">,</span> <span class="n">DYNAMIC</span><span class="o">&gt;</span> <span class="n">screenPixels</span><span class="p">(</span><span class="n">someSize</span><span class="p">);</span></code></pre></figure>
+
+<p>See it’s that easy-</p>
+
+<h3 id="the-nesting-problem">The Nesting Problem</h3>
+<p>‘Well. We have a problem. It wasn’t that easy.’
+‘Hm?’
+‘Don’t you see it? The lists…they are not contiguous.’
+‘I don’t see it. You have an array of lists, it’s gonna be contiguous on the heap.’
+‘Well, what is a list?’
+‘Is that a philosophical question?’
+‘No. A list is a pointer, maybe with a size attached.’
+‘Yes, dumbass.’
+‘This is what we’re storing in contigous memory’
+‘Hm? So you’re saying-‘
+‘Yes’
+‘Well, technically, it works. If you disgregard the performance impact-‘
+‘Get out of my office.’</p>
+
+<p>I can’t believe how I missed this. The actual data –the meat– is being stored on separate parts of the heap for every list.
+Every list makes its own allocation.
+I have failed.</p>
+
+<p>The archives don’t cut it anymore. I must head to the oracle.</p>
+
+<p><em><code class="language-plaintext highlighter-rouge">
+    Oh great oracle. What must I do?
+    How can I keep my lists...
+    How can I keep them uhh
+    Inlined?
+    Inlined...
+</code></em></p>
+
+<p>I see it now. Everything is clear. I need to embed my data in the class structure itself.
+There is only one way to do it.</p>
+
+<p>This will be the final one. I will end it here.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++">    <span class="n">std</span><span class="o">::</span><span class="n">conditional_t</span><span class="o">&lt;</span><span class="n">cond</span><span class="o">:</span> <span class="n">inlined</span><span class="p">,</span> <span class="n">iftrue</span><span class="o">:</span> <span class="n">T</span><span class="p">[</span><span class="n">dim</span><span class="p">],</span> <span class="n">iffalse</span><span class="o">:</span> <span class="n">T</span><span class="o">*&gt;</span> <span class="n">data</span><span class="p">;</span></code></pre></figure>
+
+<p>This is it. This is the end, right?</p>
+
+<hr>
+
+<p>As usual, your <a href="https://github.com/mansen420/FCG/blob/master/src/list.h">Key to The Codex</a></p>
+
+
+    </main><footer>
+  
+</footer>
+</div>
+  </body>
+</html>
